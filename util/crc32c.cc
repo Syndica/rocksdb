@@ -108,7 +108,7 @@ static const uint32_t table0_[256] = {
     0xf36e6f75, 0x0105ec76, 0x12551f82, 0xe03e9c81, 0x34f4f86a, 0xc69f7b69,
     0xd5cf889d, 0x27a40b9e, 0x79b737ba, 0x8bdcb4b9, 0x988c474d, 0x6ae7c44e,
     0xbe2da0a5, 0x4c4623a6, 0x5f16d052, 0xad7d5351};
-#ifndef __SSE4_2__
+#ifndef __CRC32__
 static const uint32_t table1_[256] = {
     0x00000000, 0x13a29877, 0x274530ee, 0x34e7a899, 0x4e8a61dc, 0x5d28f9ab,
     0x69cf5132, 0x7a6dc945, 0x9d14c3b8, 0x8eb65bcf, 0xba51f356, 0xa9f36b21,
@@ -249,7 +249,7 @@ static inline uint32_t LE_LOAD32(const uint8_t* p) {
 #endif  // !__SSE4_2__
 
 static inline void DefaultCRC32(uint64_t* l, uint8_t const** p) {
-#ifndef __SSE4_2__
+#ifndef __CRC32__
   uint32_t c = static_cast<uint32_t>(*l ^ LE_LOAD32(*p));
   *p += 4;
   *l = table3_[c & 0xff] ^ table2_[(c >> 8) & 0xff] ^
@@ -383,7 +383,7 @@ std::string IsFastCrc32Supported() {
     arch = "Arm64";
   }
 #else
-#ifdef __SSE4_2__
+#ifdef __CRC32__
   has_fast_crc = true;
 #endif  // __SSE4_2__
   arch = "x86";
@@ -426,7 +426,7 @@ std::string IsFastCrc32Supported() {
  * <davejwatson@fb.com>
  *
  */
-#if defined(__SSE4_2__) && defined(__PCLMUL__)
+#if defined(__CRC32__) && defined(__PCLMUL__)
 
 #define CRCtriplet(crc, buf, offset)                  \
   crc##0 = _mm_crc32_u64(crc##0, *(buf##0 + offset)); \
@@ -1113,7 +1113,7 @@ static inline Function Choose_Extend() {
   } else {
     return ExtendImpl<DefaultCRC32>;
   }
-#elif defined(__SSE4_2__) && defined(__PCLMUL__) && !defined NO_THREEWAY_CRC32C
+#elif defined(__CRC32__) && defined(__PCLMUL__) && !defined NO_THREEWAY_CRC32C
   // NOTE: runtime detection no longer supported on x86
 #ifdef _MSC_VER
 #pragma warning(disable: 4551)
