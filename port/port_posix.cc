@@ -188,9 +188,15 @@ int PhysicalCoreID() {
   // clang/gcc both provide cpuid.h, which defines __get_cpuid(), for x86_64 and
   // i386.
   unsigned eax, ebx = 0, ecx, edx;
-  if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
-    return -1;
+  unsigned int __max_leaf = __get_cpuid_max(1 & 0x80000000, 0);
+  if (__max_leaf == 0 || __max_leaf < 1) {
+      return -1;
   }
+  __asm("  xchgq  %%rbx,%q1\n" \
+        "  cpuid\n" \
+        "  xchgq  %%rbx,%q1" \
+      : "=a"(eax), "=&r" (ebx), "=c"(ecx), "=d"(edx) \
+      : "0"(1) );
   return ebx >> 24;
 #else
   // give up, the caller can generate a random number or something.
